@@ -4,26 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 
-/*FILE *arquivoEntrada;
 
-arquivoEntrada = fopen("entrada.txt", "r");
-
-if (arquivoEntrada == NULL) {
-    printf("Erro ao abrir arquivo de entrada.\n");
-    return 1;
-}
-
-int larguraCena;
-fscanf(arquivoEntrada, "cena %d %d %d", &larguraCena, &alturaCena, &comprimentoCena);
-
-fclose(arquivoEntrada); */
-
-
-
-// Variáveis que armazenam as dimensões da cena
-float largura = 8.0;
-float altura = 12.0;
-float comprimento = 10.0;
 float posCameraX, posCameraY, posCameraZ;
 
 void init(void) 
@@ -39,7 +20,6 @@ void init(void)
 void specialKeys(int key, int x, int y)
 {
    float angulo = 2*M_PI/180;
-   const float cameraSpeed = 0.05f;
    switch (key) {
 	   //gira em torno de y
 		case GLUT_KEY_RIGHT : 
@@ -69,42 +49,52 @@ void specialKeys(int key, int x, int y)
    
    glutPostRedisplay();
 }
-
+/*
 void mouse(int button, int state, int x, int y) {
 
 switch(button){
 		case GLUT_LEFT_BUTTON:
-		posCameraX = posCameraX + 0.5;
-		posCameraY = posCameraY + 0.5;
-		break;
+		if (state == GLUT_DOWN)
+		zoomCamera(-0.1f, posCameraX, posCameraY, posCameraZ);
 		
 }
-}
+}*/
 
 // Função que desenha o plano
-void drawPlane() {
+void desenhaAgua() {
     // Define a cor do plano
-    glColor3f(0.0, 1.0, 0.0);
+    
 
     // Define a posição dos vértices do quadrilátero
-    float x1 = -largura/2;
-    float x2 = largura/2;
-    float z1 = -comprimento/2;
-    float z2 = comprimento/2;
-
-    // Desenha o plano com dois triângulos
-    glBegin(GL_TRIANGLES);
-        // Triângulo 1
-        glVertex3f(x1, 0, z1);
-        glVertex3f(x1, 0, z2);
-        glVertex3f(x2, 0, z2);
-
-        // Triângulo 2
-        glVertex3f(x1, 0, z1);
-        glVertex3f(x2, 0, z2);
-        glVertex3f(x2, 0, z1);
-    glEnd();
+	
+    
+   glBegin(GL_QUAD_STRIP);
+   
+	glColor3f(0.0, 0.0, 1.0);
+	glVertex3d(-5.0, 0.0, -4.0);
+	glVertex3d(-5.0, 0.0, 4.0);
+	glVertex3d(5.0, 0.0, -4.0);
+	glVertex3d(5.0, 0.0, 4.0);
+	
+	
+     
+   glEnd();
+   glutSwapBuffers();
 }
+
+void desenhaTerra(){
+	
+	glBegin(GL_QUAD_STRIP);
+	glColor3f(0.0, 1.0, 0.0);
+	glVertex3d(-4.0, 0.0, -3.2);
+	glVertex3d(-4.0, 0.0, 3.2);
+	glVertex3d(4.0, 0.0, -3.2);
+	glVertex3d(4.0, 0.0, 3.2);
+	
+	glEnd();
+   glutSwapBuffers();
+	
+	}
 
 // Função que exibe a cena
 void display() {
@@ -116,7 +106,9 @@ void display() {
     glLoadIdentity();
     
     gluLookAt (posCameraX, posCameraY, posCameraZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-    drawPlane();
+   
+    desenhaAgua();
+    desenhaTerra();
     glBegin(GL_LINES);
         glColor3f (1.0, 0.0, 0.0);//vermelho x
         glVertex3f(0.0, 0.0, 0.0);
@@ -157,7 +149,7 @@ int main(int argc, char** argv) {
   
    glutDisplayFunc(display); 
    glutSpecialFunc(specialKeys);
-   glutMouseFunc(mouse);
+   //glutMouseFunc(mouse);
    glutReshapeFunc(reshape);
    
    glutMainLoop();
