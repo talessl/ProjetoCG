@@ -1,12 +1,30 @@
+//Compilar: g++ -o ilha ilha.cpp -lGL -lGLU -lglut
+//rodar: ./ilha
+
+
+#include <SDL2/SDL.h>  
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/freeglut.h>
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 
 
-float posCameraX, posCameraY, posCameraZ;
-static GLuint camp;
+bool mouseIn = false;
+float posCameraX, posCameraY , posCameraZ ; 
+float camYaw = 0.0;
+float camPitch = 0.0;
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+
+void lockCamera();
+void moveCamera(float, float);
+void moveCameraUp(float, float);
+//void control();
+void updateCamera();
 
 void init(void) 
 {
@@ -23,20 +41,12 @@ void init(void)
  
         // Habilita o modelo de colorização de Gouraud
         glShadeModel(GL_FLAT);
-     
-        
-    
-        
-   
-   //inicializa posição da câmera
-    posCameraX = 0.3;
-    posCameraY = 0.1;
-    posCameraZ = 0;
+        posCameraX = 0.3;
+		posCameraY = 0.1;
+		posCameraZ = 0;
 
 }
 
- 
-// Função responsável pela especificação dos parâmetros de iluminação
 void DefineIluminacao (void)
 {
 		
@@ -65,37 +75,114 @@ void DefineIluminacao (void)
         glLightfv(GL_LIGHT0, GL_POSITION, posicaoLuz );   
         }
 
+
+//camera
+
+
+	
+/*	
+
+void control(float moveVelocity, float mouseVelocity, bool mi){
+		if(mi){
+		int MidX = 320;
+		int MidY = 240;
+		SDL_ShowCursor(SDL_DISABLE);
+		int tmpX, tmpY;
+		SDL_GetMouseState(&tmpX, &tmpY);
+		camYaw += mouseVelocity*(MidX-tmpX);
+		camPitch += mouseVelocity*(MidY-tmpY);
+		lockCamera();
+		SDL_WarpMouse(MidX,MidY);
+		Uint8* state = SDL_GetKeyState(NULL);
+		if(state[SDLK_w]){
+			if(camPitch!=90 && camPitch!=-90){
+			moveCamera(moveVelocity,0.0);
+			moveCameraUp(moveVelocity, 0.0);
+			}
+			}
+			else if(state[SDLK_s]){
+				if(camPitch!=90 && camPitch!=-90){
+				moveCamera(moveVelocity,180.0);
+				moveCameraUp(moveVelocity, 180.0);
+				}
+				}
+				else if(state[SDLK_a]){
+					moveCamera(moveVelocity,90.0);
+					}
+					else if(state[SDLK_d]){
+						moveCamera(moveVelocity,270);
+						}
+					}
+		glRotatef(-camPitch,1.0,0.0,0.0);
+		glRotated(-camYaw,0.0,1.0,0.0);
+	}
+*/
+void updateCamera(){
+		
+		glTranslatef(-posCameraX, -posCameraY, -posCameraZ);
+}
+
+void moveCamera(float distance, float direction){
+
+	float rad = (camYaw + direction)*M_PI/180.0;
+	posCameraX -= sin(rad)*distance;
+	posCameraY -= cos(rad)*distance;
+}
+
+void moveCameraUp(float distance, float direction){
+	
+	float rad = (camPitch + direction) * M_PI/180.0;
+	posCameraY += sin(rad)*distance;
+	}
+
+void lockCamera(){
+	if(camPitch>90)
+	camPitch=90;
+	if(camPitch<-90)
+	camPitch=-90;
+	if(camYaw<0.0)
+	camYaw+=360.0;
+	if(camYaw>360.0)
+	camYaw>360.0;
+	}
+//camera
+
+ 
+// Função responsável pela especificação dos parâmetros de iluminação
+
 void specialKeys(int key, int x, int y)
 {
-   float angulo = 2*M_PI/180;
+	int moveVelocity = 0.2;
+	int mouseVelocity = 0.2;
+	
    switch (key) {
-	   //gira em torno de y
+	   
 		case GLUT_KEY_RIGHT : 
-            posCameraX =  posCameraX*cos(angulo) + posCameraZ*sin(angulo);
-            posCameraZ = -posCameraX*sin(angulo) + posCameraZ*cos(angulo);                   
+            moveCamera(moveVelocity,270);                 
             break; 
 
       case GLUT_KEY_LEFT : 
-            posCameraX =  posCameraX*cos(-angulo) + posCameraZ*sin(-angulo);
-            posCameraZ = -posCameraX*sin(-angulo) + posCameraZ*cos(-angulo);                      
+            moveCamera(moveVelocity,90.0);                     
             break; 
             
-       //gira em torno de x    
+         
        case GLUT_KEY_UP : 
-            posCameraY =  posCameraY*cos(angulo) - posCameraZ*sin(angulo);
-            posCameraZ =  posCameraY*sin(angulo) + posCameraZ*cos(angulo);                      
+           if(camPitch!=90 && camPitch!=-90){
+			moveCamera(moveVelocity,0.0);
+			moveCameraUp(moveVelocity, 0.0);}                    
             break;    
         case GLUT_KEY_DOWN : 
-            posCameraY =  posCameraY*cos(-angulo) - posCameraZ*sin(-angulo);
-            posCameraZ =  posCameraY*sin(-angulo) + posCameraZ*cos(-angulo);                      
+            if(camPitch!=90 && camPitch!=-90){
+				moveCamera(moveVelocity,180.0);
+				moveCameraUp(moveVelocity, 180.0);}                     
             break;    
-        
-        
-		break;
+		
 			
    }
    
-   glutPostRedisplay();
+    glRotatef(-camPitch,1.0,0.0,0.0);
+	glRotated(-camYaw,0.0,1.0,0.0);
+	glutPostRedisplay();
 }
 
 // Função que desenha o plano
@@ -119,74 +206,80 @@ void desenhaAgua() {
 void desenhaTerra(){
 	glColor3f(0.0, 1.0, 0.0);
 	glBegin(GL_QUADS);			// Face posterior
-	glNormal3f(0.0, 0.0, 1.0);	// Normal da face
+	glNormal3f(0.0, 0.0, 1.0);	
 	glVertex3f(0.8, 0.1, 0.8);
 	glVertex3f(-0.8, 0.1, 0.8);
 	glVertex3f(-0.8, 0, 0.8);
 	glVertex3f(0.8, 0, 0.8);
-glEnd();
+	glEnd();
 
 
-glBegin(GL_QUADS);			// Face frontal
-	glNormal3f(0.0, 0.0, -1.0); 	// Normal da face
+	glBegin(GL_QUADS);			// Face frontal
+	glNormal3f(0.0, 0.0, -1.0); 	
 	glVertex3f(0.8, 0.1, -0.8);
 	glVertex3f(0.8, 0, -0.8);
 	glVertex3f(-0.8, 0, -0.8);
 	glVertex3f(-0.8, 0.1, -0.8);
-glEnd();
-glBegin(GL_QUADS);			// Face lateral esquerda
-	glNormal3f(-1.0, 0.0, 0.0); 	// Normal da face
+	glEnd();
+	glBegin(GL_QUADS);			// Face lateral esquerda
+	glNormal3f(-1.0, 0.0, 0.0); 	
 	glVertex3f(-0.8, 0.1, 0.8);
 	glVertex3f(-0.8, 0.1, -0.8);
 	glVertex3f(-0.8, 0, -0.8);
 	glVertex3f(-0.8, 0, 0.8);
-glEnd();
-glBegin(GL_QUADS);			// Face lateral direita
-	glNormal3f(1.0, 0.0, 0.0);	// Normal da face
+	glEnd();
+	glBegin(GL_QUADS);			// Face lateral direita
+	glNormal3f(1.0, 0.0, 0.0);	
 	glVertex3f(0.8, 0.1, 0.8);
 	glVertex3f(0.8, 0, 0.8);
 	glVertex3f(0.8, 0, -0.8);
 	glVertex3f(0.8, 0.1, -0.8);
-glEnd();
-glBegin(GL_QUADS);			// Face superior
-	glNormal3f(0.0, 1.0, 0.0);  	// Normal da face
+	glEnd();
+	glBegin(GL_QUADS);			// Face superior
+	glNormal3f(0.0, 1.0, 0.0);  	
 	glVertex3f(-0.8, 0.1, -0.8);
 	glVertex3f(-0.8, 0.1, 0.8);
 	glVertex3f(0.8, 0.1, 0.8);
 	glVertex3f(0.8, 0.1, -0.8);
-glEnd();
-glBegin(GL_QUADS);			// Face inferior
-	glNormal3f(0.0, -1.0, 0.0); 	// Normal da face
+	glEnd();
+	/*glBegin(GL_QUADS);			// Face inferior
+	glNormal3f(0.0, -1.0, 0.0); 	
 	glVertex3f(-0.8, 0, -0.8);
 	glVertex3f(0.8, 0, -0.8);
 	glVertex3f(0.8, 0, 0.8);
 	glVertex3f(-0.8, 0, 0.8);
-glEnd();
+	glEnd();*/
 
 	
-	}
+}
 	
-	
-	
+	void reshape(int w, int h)
+{
+   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    
-   
-	
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 
-// Função que exibe a cena
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   DefineIluminacao();
+}
+
+//exibe a cena
 void display() {
 	
 	
 	
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    DefineIluminacao();
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   	
-	glBindTexture(GL_TEXTURE_2D, camp);
+    DefineIluminacao();	
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+	
     
     gluLookAt (posCameraX, posCameraY, posCameraZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-   
+	//control(0.2,0.2,mouseIn);
+	updateCamera();
     desenhaAgua();
     desenhaTerra();
     glBegin(GL_LINES);
@@ -205,18 +298,10 @@ void display() {
     glutSwapBuffers();
 }
 
-void reshape(int w, int h)
-{
-   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-   
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   DefineIluminacao();
-}
+
+
+
 
 // Função principal
 int main(int argc, char** argv) {
@@ -226,12 +311,12 @@ int main(int argc, char** argv) {
     glutInitWindowPosition (100, 100);
     glutCreateWindow("Plano da Cena");
     
-   init ();
-  
+    init ();
+	
    glutDisplayFunc(display); 
    glutSpecialFunc(specialKeys);
-   
    glutReshapeFunc(reshape);
+   
    
    glutMainLoop();
    
